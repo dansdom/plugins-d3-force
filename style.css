@@ -1,0 +1,59 @@
+body {
+  font: 10px sans-serif;
+}
+div {
+}
+h1 {font-size:40px;text-transform:uppercase;}
+
+.bar rect {
+  fill: steelblue;
+}
+
+.bar text.value {
+  fill: white;
+}
+
+.axis {
+  shape-rendering: crispEdges;
+}
+
+.axis path {
+  fill: none;
+}
+
+.x.axis line {
+  stroke: #fff;
+  stroke-opacity: .8;
+}
+
+.y.axis path {
+  stroke: black;
+}
+
+.pack circle {
+  fill: rgb(31, 119, 180);
+  fill-opacity: .15;
+  stroke: rgb(31, 119, 180);
+  stroke-width: 1px;
+}
+
+.leaf circle {
+  fill: #ff7f0e;
+  fill-opacity: 1;
+}
+
+.group circle:hover {
+  stroke: #FF7F0E;
+  stroke-width:2px;
+  fill-opacity: .3;
+  cursor:pointer;
+}
+
+.group:first-child circle:hover {
+  fill-opacity:0.15;
+  cursor:default;
+  stroke: #1F77B4;
+  stroke-width:1px;
+}
+
+section {width:100%;padding:50px;clear:both;overflow:hidden;border-bottom:1px solid #000;}
