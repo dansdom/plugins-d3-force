@@ -1,9 +1,11 @@
 {
  "name": "flare2",
  "group": [
-    {"name": "Cluster", "size": 3938},
-    {"name": "CommunityStructure", "size": 12},
-    {"name": "HierarchicalCluster", "size": 14},
-    {"name": "Hierarchical", "size": 14}
+    {"name": "Cluster",
+     "group" : [
+        {"name" : "sub3", "value" : 100},
+        {"name" : "sub2", "value" : 200}
+     ]},
+    {"name": "CommunityStructure", "value": 200}
   ]
 }
