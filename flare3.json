@@ -1,11 +1,13 @@
 {
- "name": "flare2",
- "group": [
-    {"name": "Cluster",
-     "group" : [
-        {"name" : "sub3", "value" : 100},
-        {"name" : "sub2", "value" : 200}
-     ]},
-    {"name": "CommunityStructure", "value": 200}
+ "name": "flare",
+ "children": [
+    {
+        "name": "obj1",
+        "value": 500
+    },
+    {
+        "name": "obj2",
+        "value": 500
+    }
   ]
 }

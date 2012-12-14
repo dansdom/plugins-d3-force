@@ -34,19 +34,19 @@ var vis = d3.select("body").append("svg:svg")
     .attr("width", w)
     .attr("height", h);
 
-d3.json("flare.json", function(error, json) {
-  console.log(json)
+d3.json("flare3.json", function(error, json) {
   root = json;
   root.fixed = true;
   root.x = w / 2;
   root.y = h / 2 - 80;
-  console.log(json);
   update();
 });
 
 function update() {
   var nodes = flatten(root),
       links = d3.layout.tree().links(nodes);
+
+  console.log(nodes);
 
   // Restart the force layout.
   force

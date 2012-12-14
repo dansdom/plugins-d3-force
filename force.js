@@ -81,12 +81,13 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             }
 
         },
-        buildChart : function(data) {
+        buildChart : function() {
 
             var container = this,
-                initialDataSet = data,
+                initialDataSet = container.data,
                 tick = function() {
-                    container.links.attr("x1", function(d) { return d.source.x; })
+                    container.links
+                        .attr("x1", function(d) { return d.source.x; })
                         .attr("y1", function(d) { return d.source.y; })
                         .attr("x2", function(d) { return d.target.x; })
                         .attr("y2", function(d) { return d.target.y; });
@@ -103,8 +104,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .on("tick", tick);
 
             container.tree = d3.layout.tree()
-                .children(function(d) { return d[container.opts.dataStructure.children]})
-                .value(function(d) { return d[container.opts.dataStructure.value]})
+                .children(function(d) { return d.children})
+                .value(function(d) { return d.size});
                 
             // create the svg element that holds the chart
             container.chart = d3.select(container.el).append("svg")
@@ -112,43 +113,45 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .attr("height", container.height);
 
             // run the update chart function
-            container.updateChart(data);
+            container.updateChart();
             
         },
-        updateChart : function(data) {
+        updateChart : function() {
 
             var container = this,
+                children = container.opts.dataStructure.children,
+                value = container.opts.dataStructure.value,
                 click = function(d) {
 
                     if (d.children) {
                         d._children = d.children;
                         d.children = null;
+                        d[children] = null;
                     } else {
                         d.children = d._children;
+                        d[children] = d._children;
                         d._children = null;
                     }
-                    container.updateChart(container.data);
+                    container.data = container.parseData(container.dataSet);
+                    container.updateChart();
                 },
                 circleColor = function(d) {
-                    return d._children ? "red" : d[container.opts.dataStructure.children] ? "yellow" : "green";
-                    /*
                     var color;
 
-                    if (d.children) {
-                        color : "#ff0033";
+                    if (d._children) {
+                        color = "red"
+                    }
+                    else if (d.children) {
+                        color = "yellow";
                     }
                     else {
-                        color : "#aabb55";
+                        color = "green";
                     }
                     return color;
-                    */
                 };
-            
-            var tree = container.tree
+
+            var tree = d3.layout.tree()
                 .links(container.data);
-            //container.tree = d3.layout.tree()
-            //    .links(container.data);
-            console.log(tree);
 
             // re-set the force layout
             container.force
@@ -161,7 +164,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .data(tree, function(d) { return d.target.id; });
 
             // enter any new lines
-            container.links.enter().insert("line")
+            container.links.enter().insert("svg:line", ".node")
                 .attr("class", "link")
                 .attr("x1", function(d) { return d.source.x; })
                 .attr("y1", function(d) { return d.source.y; })
@@ -177,22 +180,25 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .style("fill", circleColor);
 
             container.nodes.transition()
-                .attr("r", function(d) { return d.children ? 5 : Math.sqrt(d[container.opts.dataStructure.value]); });
+                .attr("r", function(d) { return d.children ? 5 : Math.sqrt(d[value]) / 10; });
 
             // enter new nodes
-            container.nodes.enter().append("circle")
+            container.nodes.enter().append("svg:circle")
                 .attr("class", "node")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r", function(d) { return d.children ? 5 : Math.sqrt(d[container.opts.dataStructure.value]); })
+                .attr("r", function(d) { return d.children ? 5 : Math.sqrt(d[value]) / 10; })
                 .style("fill", circleColor)
                 .on("click", click)
                 .call(container.force.drag);
 
+            // exit old nodes
+            container.nodes.exit().remove();
+
         },
         tick : function(container) {
             
-            var container = this;           
+            var container = this;          
             
             container.links
                 .attr("x1", function(d) { return d.source.x; })
@@ -217,54 +223,34 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         },
         // Returns a flattened hierarchy containing all leaf nodes under the root.
         parseData : function(data) {
-           
-            var dataList = [],
+            var nodes = [], 
+                i = 0,
                 children = this.opts.dataStructure.children,
+                value = this.opts.dataStructure.value,
                 container = this;
-        
-            // recursively loop through each child of the object
-            function recurse(name, node) {
-                if (node[children]) {
-                    node[children].forEach(function(child) { recurse(node[container.opts.dataStructure.name], child); });
-                }
-                else {
-                    dataList.push({packageName: name, className: node[container.opts.dataStructure.name], value: node.size});
-                }
-            };
 
-            recurse(null, data);
-            return {children: dataList};  
-        },
-        // Returns a flattened hierarchy containing all leaf nodes under the root.
-        /*
-        parseData : function(data) {
-           
-            var container = this,
-                nodes = [],
-                i = 0;
+            //console.log(data);
 
             function recurse(node) {
-                if (node[container.opts.dataStructure.children]) {
-                    node.children = node[container.opts.dataStructure.children];
+                
 
-                    node.size = node[container.opts.dataStructure.children].reduce(function(previous, current) { 
-                        console.log(previous); 
-                        console.log(current); 
-                        return previous + recurse(current); 
-                    }, 0);
+                if (node[children]) {
+                    // this is whack. The force layout only excepts the children attribute. dang :(
+                    node.children = node[children];
+                    node[value] = node.children.reduce(function(previous, current) { return previous + recurse(current); }, 0);
                 }
                 if (!node.id) {
                     node.id = ++i;
                 }
                 nodes.push(node);
-                return node.size;
+                return node[value];
             };
 
-            data.size = recurse(data);
-            console.log(nodes);
+            data[value] = recurse(data);
+            //console.log(nodes);
             return nodes;
         },
-        */
+        
         // updates the data set for the chart
         updateData : function(url, type) {
             var container = this,
@@ -275,9 +261,12 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 data.fixed = true;
                 data.x = container.width / 2;
                 data.y = container.height / 2;
+
+                container.dataSet = data;
+
                 // data object
                 container.data = container.parseData(data);
-                container.updateChart(data);
+                container.updateChart();
             });
         },
         // gets data from a JSON request
@@ -288,9 +277,12 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 data.fixed = true;
                 data.x = container.width / 2;
                 data.y = container.height / 2;
+
+                container.dataSet = data;
+                
                 // data object
                 container.data = container.parseData(data);
-                container.buildChart(container.data);
+                container.buildChart();
             });
         },
         // updates the settings of the chart
