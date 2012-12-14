@@ -37,8 +37,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         // instead of defining a color array, I will set a color scale and then let the user overwrite it
         'colorRange' : [],
         'colors' : {            // colors for the nodes
-            'parent' : 'grey',
-            'group' : 'pink',
+            'parent' : 'white',
+            'group' : 'blue',
             'child' : 'red'
         },
         'fontSize' : 12,
@@ -49,8 +49,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             'value' : 'size'
         },
         'charge' : 100 , // the size of the force
-        'linkDistance' : 300, // I may calculate this from the data and chart size
-        'speed' : 1500  // speed of the trasitions
+        'linkDistance' : 100 // I may calculate this from the data and chart size
     };
     
     // plugin functions go here
@@ -113,16 +112,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     }
                     return charge;
                 })
-                .linkDistance(function(d) {
-                    var distance;
-                    if (d.target._children) {
-                        distance = container.opts.linkDistance;
-                    }
-                    else {
-                        distance = container.opts.linkDistance / 2;
-                    }
-                    return distance;
-                })
                 .on("tick", tick);
 
             container.tree = d3.layout.tree()
@@ -180,7 +169,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                         radius = 5;
                     }
                     else {
-                        radius = Math.sqrt(d[value]) / Math.ceil(dimensions * 5); 
+                        radius = Math.sqrt(d[value]) / Math.ceil(dimensions * 8); 
                     }
                     return radius;
                 }; 
@@ -189,6 +178,19 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             container.force
                 .nodes(container.data)
                 .links(tree)
+                .linkDistance(function(d) {
+                    var distance,
+                        dimensions = container.totalDataSize / (container.height * container.width);
+
+                    if (d.target._children) {
+                        distance = container.opts.linkDistance / (dimensions * 30);
+                    }
+                    else {
+                        distance = container.opts.linkDistance / (dimensions * 80);
+                    }
+                    console.log(distance);
+                    return distance;
+                })
                 .start();
 
             // update the links
