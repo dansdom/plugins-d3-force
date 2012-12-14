@@ -28,7 +28,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
     
     // these are the plugin default settings that will be over-written by user settings
     d3.Force.settings = {
-        'diameter': 500,
         'height' : 500,
         'width' : 500,
         'padding': 2,
@@ -37,6 +36,11 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         'dataType' : 'json',
         // instead of defining a color array, I will set a color scale and then let the user overwrite it
         'colorRange' : [],
+        'colors' : {            // colors for the nodes
+            'parent' : 'grey',
+            'group' : 'pink',
+            'child' : 'red'
+        },
         'fontSize' : 12,
         // defines the data structure of the document
         'dataStructure' : {
@@ -44,6 +48,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             'children' : 'children',
             'value' : 'size'
         },
+        'charge' : 100 , // the size of the force
+        'linkDistance' : 300, // I may calculate this from the data and chart size
         'speed' : 1500  // speed of the trasitions
     };
     
@@ -53,7 +59,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
 
             var container = this;
             // define the size of the chart
-            container.diameter = this.opts.diameter;
             container.width = this.opts.width;
             container.height = this.opts.height;
             // set the scale for the chart - I may or may not actually use this scale
@@ -84,7 +89,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         buildChart : function() {
 
             var container = this,
-                initialDataSet = container.data,
                 tick = function() {
                     container.links
                         .attr("x1", function(d) { return d.source.x; })
@@ -99,8 +103,26 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             // define the chart layout
             container.force = d3.layout.force()
                 .size([container.width, container.height])
-                .charge(function(d) { return d._children ? -d.size / 100 : -30;})
-                .linkDistance(function(d) { return d.target._children ? 100 : 50;})
+                .charge(function(d) { 
+                    var charge;
+                    if (d._children) {
+                        charge = -d.size / container.opts.charge;
+                    }
+                    else {
+                        charge = -(container.opts.charge / 3);
+                    }
+                    return charge;
+                })
+                .linkDistance(function(d) {
+                    var distance;
+                    if (d.target._children) {
+                        distance = container.opts.linkDistance;
+                    }
+                    else {
+                        distance = container.opts.linkDistance / 2;
+                    }
+                    return distance;
+                })
                 .on("tick", tick);
 
             container.tree = d3.layout.tree()
@@ -121,6 +143,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             var container = this,
                 children = container.opts.dataStructure.children,
                 value = container.opts.dataStructure.value,
+                tree = d3.layout.tree().links(container.data),
                 click = function(d) {
 
                     if (d.children) {
@@ -139,19 +162,28 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     var color;
 
                     if (d._children) {
-                        color = "red"
+                        color = container.opts.colors.group;
                     }
                     else if (d.children) {
-                        color = "yellow";
+                        color = container.opts.colors.parent;
                     }
                     else {
-                        color = "green";
+                        color = container.opts.colors.child;
                     }
                     return color;
-                };
-
-            var tree = d3.layout.tree()
-                .links(container.data);
+                },
+                circleSize = function(d) {
+                    var radius,
+                        dimensions = container.totalDataSize / (container.height * container.width);
+                    // I would like to calculate this based on the total data size and the chart size
+                    if (d.children) {
+                        radius = 5;
+                    }
+                    else {
+                        radius = Math.sqrt(d[value]) / Math.ceil(dimensions * 5); 
+                    }
+                    return radius;
+                }; 
 
             // re-set the force layout
             container.force
@@ -180,14 +212,14 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .style("fill", circleColor);
 
             container.nodes.transition()
-                .attr("r", function(d) { return d.children ? 5 : Math.sqrt(d[value]) / 10; });
+                .attr("r", circleSize);
 
             // enter new nodes
             container.nodes.enter().append("svg:circle")
                 .attr("class", "node")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r", function(d) { return d.children ? 5 : Math.sqrt(d[value]) / 10; })
+                .attr("r", circleSize)
                 .style("fill", circleColor)
                 .on("click", click)
                 .call(container.force.drag);
@@ -230,10 +262,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 container = this;
 
             //console.log(data);
-
             function recurse(node) {
                 
-
                 if (node[children]) {
                     // this is whack. The force layout only excepts the children attribute. dang :(
                     node.children = node[children];
@@ -243,11 +273,14 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     node.id = ++i;
                 }
                 nodes.push(node);
+                //console.log(node[value]);
                 return node[value];
             };
 
             data[value] = recurse(data);
             //console.log(nodes);
+            container.totalDataSize = nodes[nodes.length - 1][value];
+            //console.log(container.totalDataSize);
             return nodes;
         },
         
@@ -263,7 +296,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 data.y = container.height / 2;
 
                 container.dataSet = data;
-
                 // data object
                 container.data = container.parseData(data);
                 container.updateChart();
@@ -279,7 +311,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 data.y = container.height / 2;
 
                 container.dataSet = data;
-                
                 // data object
                 container.data = container.parseData(data);
                 container.buildChart();

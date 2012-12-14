@@ -1,13 +1,18 @@
 {
  "name": "flare",
- "children": [
+ "group": [
+    {"name": "AgglomerativeCluster", "size": 938},
+    {"name": "CommunityStructure", "size": 812},
+    {"name": "HierarchicalCluster", "size": 1714},
+    {"name": "MergeEdge", "size": 1743},
+    {"name": "MergeEdge1", "size": 743},
+    {"name": "MergeEdge2", "size": 743},
     {
-        "name": "obj1",
-        "value": 500
-    },
-    {
-        "name": "obj2",
-        "value": 500
+        "name" : "something else",
+        "group" : [
+            {"name": "MergeEdge", "size": 1743},
+            {"name": "MergeEdge1", "size": 743}
+        ]
     }
   ]
 }

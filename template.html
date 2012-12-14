@@ -11,11 +11,10 @@
 
     <section>
       <h1>Chart 1</h1>
-      <button onclick="updateChart1A()">Data 1</button>
-      <button onclick="updateChart1B()">Data 2</button>
-      <button onclick="updateChart1C()">Data 3</button>
-      <button onclick="updateChart1D()">Data 4</button>
-      <button onclick="reset1()">Reset Chart</button>
+      <button onclick="updateChartA()">Data 1</button>
+      <button onclick="updateChartB()">Data 2</button>
+      <button onclick="updateChartC()">Data 3</button>
+      <button onclick="updateChartD()">Data 4</button>
 
       <div id="chart1"></div>
 
@@ -26,7 +25,7 @@
           'width' : 1200,
           'height' : 600,
           'padding': 1,
-          'dataUrl' : 'flare2.json',
+          'dataUrl' : 'flare4.json',
           'dataType' : 'json',
           'chartType' : 'bubble',
           'dataStructure' : {
@@ -36,27 +35,23 @@
             },
           'colorRange' : [d3.rgb(240, 150, 60), d3.rgb(70, 180, 190), d3.rgb(100, 20, 30), d3.rgb(40, 150, 60), d3.rgb(70, 180, 190), d3.rgb(140, 150, 60), d3.rgb(40, 150, 160), d3.rgb(240, 150, 60)]
         });
-        /*
-        function updateChart1A() {
-          d3.pack(chart1, "updateData", "flare.json");
+        
+        function updateChartA() {
+          d3.force(chart1, "updateData", "flare4.json");
         };
 
-        function updateChart1B() {
-          d3.pack(chart1, "updateData", "flare2.json");
+        function updateChartB() {
+          d3.force(chart1, "updateData", "flare3.json");
         };
 
-        function updateChart1C() {
-          d3.pack(chart1, "updateData", "flare3.json");
+        function updateChartC() {
+          d3.force(chart1, "updateData", "flare2.json");
         };
 
-        function updateChart1D() {
-          d3.pack(chart1, "updateData", "flare4.json");
+        function updateChartD() {
+          d3.force(chart1, "updateData", "flare.json");
         };
 
-        function reset1() {
-          d3.pack(chart1, "resetChart");
-        }
-        */
       </script>
     </section>
 
