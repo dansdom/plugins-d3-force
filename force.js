@@ -14,7 +14,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         this.el = element;
 
         // this is the namespace for all bound event handlers in the plugin
-        this.namespace = "pack";
+        this.namespace = "force";
         // extend the settings object with the options, make a 'deep' copy of the object using an empty 'holding' object
         // using the extend code that I ripped out of jQuery
         this.opts = Extend(true, {}, d3.Force.settings, options);
@@ -336,7 +336,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
     // props to https://github.com/jsor/jcarousel/blob/master/src/jquery.jcarousel.js for the base of the code & http://isotope.metafizzy.co/ for a good implementation
     d3.force = function(element, options, callback) {
         // define the plugin name here so I don't have to change it anywhere else. This name refers to the jQuery data object that will store the plugin data
-        var pluginName = "pack",
+        var pluginName = "force",
             args;
 
         function applyPluginMethod(el) {
