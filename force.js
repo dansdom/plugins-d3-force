@@ -57,75 +57,13 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
         init : function() {
 
             var container = this;
-            // define the size of the chart
-            container.width = this.opts.width;
-            container.height = this.opts.height;
+            
             // set the scale for the chart - I may or may not actually use this scale
-            container.scaleX = d3.scale.linear().range([0, container.width]);
-            container.scaleY = d3.scale.linear().range([0, container.height]);
+            container.scaleX = d3.scale.linear().range([0, container.opts.width]);
+            container.scaleY = d3.scale.linear().range([0, container.opts.height]);
             // define the data format - not 100% sure what this does. will need to research this attribute
             //container.format = d3.format(",d");
-            // if there is a colour range defined for this chart then use the settings. If not, use the inbuild category20 colour range
-            if (this.opts.colorRange.length > 0) {
-                container.color = d3.scale.ordinal().range(this.opts.colorRange);
-            }
-            else {
-                container.color = d3.scale.category20();
-            }
-
-
-            // define the data for the graph
-            if (typeof this.opts.dataUrl == "string") {
-                // go get the data
-                this.getData(this.opts.dataUrl, this.opts.dataType);
-            }
-            else {
-                // just going to set data from the opts object
-                //this.setData(this.opts.data);
-            }
-
-        },
-        buildChart : function() {
-
-            var container = this,
-                tick = function() {
-                    container.links
-                        .attr("x1", function(d) { return d.source.x; })
-                        .attr("y1", function(d) { return d.source.y; })
-                        .attr("x2", function(d) { return d.target.x; })
-                        .attr("y2", function(d) { return d.target.y; });
-                    
-                    container.nodes.attr("cx", function(d) { return d.x; })
-                        .attr("cy", function(d) { return d.y; });
-                };
-
-            // define the chart layout
-            container.force = d3.layout.force()
-                .size([container.width, container.height])
-                .charge(function(d) { 
-                    var charge;
-                    if (d._children) {
-                        charge = -d.size / container.opts.charge;
-                    }
-                    else {
-                        charge = -(container.opts.charge / 3);
-                    }
-                    return charge;
-                })
-                .on("tick", tick);
-
-            container.tree = d3.layout.tree()
-                .children(function(d) { return d.children})
-                .value(function(d) { return d.size});
-                
-            // create the svg element that holds the chart
-            container.chart = d3.select(container.el).append("svg")
-                .attr("width", container.width)
-                .attr("height", container.height);
-
-            // run the update chart function
-            container.updateChart();
-            
+            this.getData();
         },
         updateChart : function() {
 
@@ -163,7 +101,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 },
                 circleSize = function(d) {
                     var radius,
-                        dimensions = container.totalDataSize / (container.height * container.width);
+                        dimensions = container.totalDataSize / (container.opts.height * container.opts.width);
                     // I would like to calculate this based on the total data size and the chart size
                     if (d.children) {
                         radius = 5;
@@ -172,7 +110,18 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                         radius = Math.sqrt(d[value]) / Math.ceil(dimensions * 8); 
                     }
                     return radius;
-                }; 
+                };
+
+            // if there is a colour range defined for this chart then use the settings. If not, use the inbuild category20 colour range
+            if (this.opts.colorRange.length > 0) {
+                container.color = d3.scale.ordinal().range(this.opts.colorRange);
+            }
+            else {
+                container.color = d3.scale.category20();
+            }
+                
+            // define the chart layout
+            this.setLayout();
 
             // re-set the force layout
             container.force
@@ -180,7 +129,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 .links(tree)
                 .linkDistance(function(d) {
                     var distance,
-                        dimensions = container.totalDataSize / (container.height * container.width);
+                        dimensions = container.totalDataSize / (container.opts.height * container.opts.width);
 
                     if (d.target._children) {
                         distance = container.opts.linkDistance / (dimensions * 30);
@@ -188,7 +137,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     else {
                         distance = container.opts.linkDistance / (dimensions * 80);
                     }
-                    console.log(distance);
                     return distance;
                 })
                 .start();
@@ -230,19 +178,48 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             container.nodes.exit().remove();
 
         },
-        tick : function(container) {
-            
-            var container = this;          
-            
-            container.links
-                .attr("x1", function(d) { return d.source.x; })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
-            
-            container.nodes.attr("cx", function(d) { return d.x; })
-                .attr("cy", function(d) { return d.y; });
-            
+        setLayout : function() {
+            var container = this,
+                tick = function() {
+                    container.links
+                        .attr("x1", function(d) { return d.source.x; })
+                        .attr("y1", function(d) { return d.source.y; })
+                        .attr("x2", function(d) { return d.target.x; })
+                        .attr("y2", function(d) { return d.target.y; });
+                    
+                    container.nodes.attr("cx", function(d) { return d.x; })
+                        .attr("cy", function(d) { return d.y; });
+                }; 
+
+            // ####### LAYOUT #######
+            if (!container.force) {
+                container.force = d3.layout.force()
+                    .size([container.opts.width, container.opts.height])
+                    .charge(function(d) { 
+                        var charge;
+                        if (d._children) {
+                            charge = -d.size / container.opts.charge;
+                        }
+                        else {
+                            charge = -(container.opts.charge / 3);
+                        }
+                        return charge;
+                    })
+                    .on("tick", tick);
+            }
+
+            if (!container.tree) {
+                container.tree = d3.layout.tree()
+                    .children(function(d) { return d.children})
+                    .value(function(d) { return d.size});
+            }
+                
+            if (!container.chart) {
+                // create the svg element that holds the chart
+                container.chart = d3.select(container.el).append("svg")
+                    .attr("width", container.opts.width)
+                    .attr("height", container.opts.height);
+            }
         },
         // resets the zoom on the chart
         resetChart : function() {
@@ -294,8 +271,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             d3.json(url, function(error, data) {
                 // build the chart
                 data.fixed = true;
-                data.x = container.width / 2;
-                data.y = container.height / 2;
+                data.x = container.opts.width / 2;
+                data.y = container.opts.height / 2;
 
                 container.dataSet = data;
                 // data object
@@ -304,18 +281,18 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             });
         },
         // gets data from a JSON request
-        getData : function(url, type) {
+        getData : function() {
             var container = this;
-            d3.json(url, function(error, data) {
+            d3.json(container.opts.dataUrl, function(error, data) {
                 // build the chart
                 data.fixed = true;
-                data.x = container.width / 2;
-                data.y = container.height / 2;
+                data.x = container.opts.width / 2;
+                data.y = container.opts.height / 2;
 
                 container.dataSet = data;
                 // data object
                 container.data = container.parseData(data);
-                container.buildChart();
+                container.updateChart();
             });
         },
         // updates the settings of the chart
