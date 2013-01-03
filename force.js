@@ -144,7 +144,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
 
             // update the links
             container.links = container.chart.selectAll("line.link")
-                .data(tree, function(d) { return d.target.id; });
+                .data(tree, function(d) { return d.target.id; })
+                .style("stroke", container.opts.colors.line);
 
             // enter any new lines
             container.links.enter().insert("svg:line", ".node")
