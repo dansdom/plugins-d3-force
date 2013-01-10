@@ -49,6 +49,7 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             'children' : 'children',
             'value' : 'size'
         },
+        'chartName' : null,
         'charge' : 100 , // the size of the force
         'linkDistance' : 100 // I may calculate this from the data and chart size
     };
@@ -123,6 +124,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 
             // define the chart layout
             this.setLayout();
+            // set the chart title
+            this.setTitle();
 
             // re-set the force layout
             container.force
@@ -197,7 +200,6 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
             // ####### LAYOUT #######
             if (!container.force) {
                 container.force = d3.layout.force()
-                    .size([container.opts.width, container.opts.height])
                     .charge(function(d) { 
                         var charge;
                         if (d._children) {
@@ -210,6 +212,8 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                     })
                     .on("tick", tick);
             }
+            container.force
+                .size([container.opts.width, container.opts.height]);
 
             if (!container.tree) {
                 container.tree = d3.layout.tree()
@@ -219,9 +223,24 @@ var Extend = Extend || function(){var h,g,b,e,i,c=arguments[0]||{},f=1,k=argumen
                 
             if (!container.chart) {
                 // create the svg element that holds the chart
-                container.chart = d3.select(container.el).append("svg")
-                    .attr("width", container.opts.width)
+                container.chart = d3.select(container.el).append("svg");
+            }
+            container.chart
+                .attr("width", container.opts.width)
                     .attr("height", container.opts.height);
+        },
+        setTitle : function() {
+            var container = this;
+
+            // ####### CHART TITLE #######
+            if (container.opts.chartName) {
+                if (!container.chartName) {
+                    container.chartName = container.chart.append("g")
+                        .attr("class", "chartName")
+                        .append("text");
+                }
+                container.chartName = container.chart.select(".chartName").select("text")
+                    .text(container.opts.chartName);
             }
         },
         // resets the zoom on the chart
